@@ -19,7 +19,7 @@ def run_adfuller_test(Spread):
     if len(Spread) >= 100:
         # settings for regression testing:
         # https://www.statsmodels.org/dev/generated/statsmodels.tsa.stattools.adfuller.html
-        return float(sm.tsa.adfuller(x=Spread)[1]) # ,regression='ctt'
+        return float(sm.tsa.adfuller(x=Spread)[1])  # ,regression='ctt'
     else:
         return np.nan
 
@@ -55,6 +55,7 @@ def run_johansen_test(data):
 
 def run_engel_granger(ts1, ts2):
     # returns pval
+    # TO DO: time series are assumed to be integrated of order 1!!!
     return sm.tsa.coint(ts1, ts2, autolag='bic')[1]
 
 def zscore_std(series):
@@ -288,15 +289,19 @@ class backtest_pair:
             end = pd.offsets.DateOffset(months=4)#.date()
             training_set = self.dataset[[self.ticker1, self.ticker2]].loc[i-start:i]
             test_set = self.dataset[[self.ticker1, self.ticker2]].loc[i:i+end]
-            print('training set',training_set.index[0], training_set.index[-1])
-            print('test set',test_set.index[0], test_set.index[-1])
+            # print('training set', training_set.index[0], training_set.index[-1])
+            # print('test set', test_set.index[0], test_set.index[-1])
             # get historical spread + historical hedge ratio
             training_spread, hedge_ratio = get_OLS_spread(training_set[self.ticker1],
                                                           training_set[self.ticker2])
             training_spread_zscore = zscore_std(training_spread)
             EG, ADF, Johansen = self.perform_tests(training_set, training_spread_zscore)
             # print(EG, ADF, Johansen)
-            if (EG <= 0.05) and (ADF <= 0.05) and (Johansen == 'coint exists'):
+            print('tradng set: {}:{}, EG:{}, ADF:{}, Johansen:{}'.format(test_set.index[0].strftime('%Y-%m-%d'),
+                                                                         test_set.index[-1].strftime('%Y-%m-%d'),
+                                                                         round(EG,3), round(ADF,3), Johansen))
+            if (EG <= 0.055) and (ADF <= 0.055) and (Johansen == 'coint exists'):
+                # print('tradng set', test_set.index[0], test_set.index[-1])
                 self.get_returns(hedge_ratio=hedge_ratio, dataset=test_set, trading=True)
                 # self.spread_zscore = pd.concat([self.spread_zscore, test_set])
             else:
@@ -358,7 +363,6 @@ class backtest_pair:
         self.iterate()
         self.get_trades_pl()
 
-# bt1 = backtest_pair('ITUB4.SA', 'Ccro3.SA', -2, 2, -0.5, 0.75, 0.005)
 bt1 = backtest_pair('Bbas3.SA', 'Usim3.SA','2016-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
 # bt1 = backtest_pair('V', 'MA', -2, 2, -0.2, 0.5)
 bt1.run()

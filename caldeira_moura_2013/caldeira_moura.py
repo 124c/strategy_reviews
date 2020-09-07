@@ -1,5 +1,4 @@
 import os
-os.chdir('/Users/mmajidov/Projects/platform')
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -196,7 +195,7 @@ trades = get_cross_section(signals, 0.005)
 # plt.show()
 
 class backtest_pair:
-    def __init__(self, ticker1, ticker2, long_open, short_open, long_close, short_close, costs):
+    def __init__(self, ticker1, ticker2, start_time, end_time, long_open, short_open, long_close, short_close, costs):
         # settings
         self.ticker1 = ticker1
         self.ticker2 = ticker2
@@ -205,6 +204,8 @@ class backtest_pair:
         self.short_open = short_open
         self.short_close = short_close
         self.costs = costs
+        self.start_time = start_time
+        self.end_time = end_time
         # data
         self.dataset = None
         self.spread = None
@@ -219,7 +220,7 @@ class backtest_pair:
 
     def get_dataset(self):
         self.dataset = dr.get_prices([self.ticker1, self.ticker2], 'yahoo',
-                                     '2004-12-31', '2013-08-25', 'Adj Close').dropna()
+                                     self.start_time, self.end_time, 'Adj Close').dropna()
         for i in ['Spread_zscore', 'positions','position_numbers', 'Log_L', 'Log_S',
                   'log_returns', 'simple_returns']:
             self.dataset[i] = np.nan
@@ -230,7 +231,7 @@ class backtest_pair:
         self.four_month_intervals = pd.date_range(start, end, freq='4M')
 
     def start_trading_time(self):
-        start = pd.to_datetime('2004-12-31')
+        start = pd.to_datetime(self.start_time)
         self.start_trading_date = pd.to_datetime((start + pd.offsets.DateOffset(months=12)).date())
 
     def finalize_time_stamps(self):
@@ -357,8 +358,8 @@ class backtest_pair:
         self.iterate()
         self.get_trades_pl()
 
-bt1 = backtest_pair('ITUB4.SA', 'Ccro3.SA', -2, 2, -0.5, 0.75, 0.005)
-bt1 = backtest_pair('Bbas3.SA', 'Usim3.SA', -2, 2, -0.5, 0.75, 0.005)
+# bt1 = backtest_pair('ITUB4.SA', 'Ccro3.SA', -2, 2, -0.5, 0.75, 0.005)
+bt1 = backtest_pair('Bbas3.SA', 'Usim3.SA','2016-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
 # bt1 = backtest_pair('V', 'MA', -2, 2, -0.2, 0.5)
 bt1.run()
 rets = np.exp(bt1.dataset[bt1.dataset['log_returns']!=0]['log_returns'].cumsum())-1

@@ -49,13 +49,17 @@ def run_johansen_test(data):
     We have m hypothesised numbers of cointegrated equations: here at most 0, at most 1 
     cvt - Critical values (90%, 95%, 99%) of trace statistic
     lr1 - Trace statistic
+    Trace test:
+    H0: 0 cointegration equations
+    H1: coint. eq. exist > 0 
+    explanation https://www.youtube.com/watch?v=TB4m9M1sIJ0
     """
     stat_r0 = result.lr1[0]
     crits_r0 = result.cvt[0]
-    eig_stat_r0 = result.lr2[0]
-    eig_crits_r0 = result.cvm[0]
+    # eig_stat_r0 = result.lr2[0]
+    # eig_crits_r0 = result.cvm[0]
     stat_res = trace_results(stat_r0, crits_r0)  # there are 0 coint. equations. pass if rejected
-    eig_res = trace_results(eig_stat_r0, eig_crits_r0)  # there are 0 coint. equations. pass if rejected
+    # eig_res = trace_results(eig_stat_r0, eig_crits_r0)  # there are 0 coint. equations. pass if rejected
     return stat_res
 
 def run_engel_granger(ts1, ts2):
@@ -247,8 +251,8 @@ class backtest_pair:
                                                               self.start_trading_date]
 
     def perform_tests(self, data, zscore):
-        EG = run_engel_granger(data[self.ticker1].pct_change().dropna(),
-                               data[self.ticker2].pct_change().dropna())
+        EG = run_engel_granger(data[self.ticker1],#.pct_change().dropna(),
+                               data[self.ticker2])#.pct_change().dropna())
         ADF = run_adfuller_test(zscore)
         Johansen = run_johansen_test(data.dropna())
         return EG, ADF, Johansen
@@ -297,8 +301,6 @@ class backtest_pair:
             end = pd.offsets.DateOffset(months=4)#.date()
             training_set = self.dataset[[self.ticker1, self.ticker2]].loc[i-start:i]
             test_set = self.dataset[[self.ticker1, self.ticker2]].loc[i:i+end]
-            # print('training set', training_set.index[0], training_set.index[-1])
-            # print('test set', test_set.index[0], test_set.index[-1])
             # get historical spread + historical hedge ratio
             training_spread, hedge_ratio = get_OLS_spread(training_set[self.ticker1],
                                                           training_set[self.ticker2])
@@ -308,7 +310,8 @@ class backtest_pair:
             print('tradng set: {}:{}, EG:{}, ADF:{}, Johansen:{}'.format(test_set.index[0].strftime('%Y-%m-%d'),
                                                                          test_set.index[-1].strftime('%Y-%m-%d'),
                                                                          round(EG, 3), round(ADF, 3), Johansen))
-            if (EG <= 0.095) and (ADF <= 0.095) and (Johansen == 'coint exists'):
+            # if (EG <= 0.105) and (ADF <= 0.105) and (Johansen == 'coint exists'):
+            if (ADF <= 0.105):
                 # print('tradng set', test_set.index[0], test_set.index[-1])
                 self.get_returns(hedge_ratio=hedge_ratio, dataset=test_set, trading=True)
                 # self.spread_zscore = pd.concat([self.spread_zscore, test_set])
@@ -371,8 +374,8 @@ class backtest_pair:
         self.iterate()
         self.get_trades_pl()
 
-bt1 = backtest_pair('Bbas3.SA', 'Usim3.SA','2016-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
-# bt1 = backtest_pair('V', 'MA', -2, 2, -0.2, 0.5)
+# bt1 = backtest_pair('Bbas3.SA', 'Usim3.SA','2016-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
+bt1 = backtest_pair('V', 'MA', '2014-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
 bt1.run()
 rets = np.exp(bt1.dataset[bt1.dataset['log_returns']!=0]['log_returns'].cumsum())-1
 (bt1.dataset[bt1.dataset['log_returns']!=0]['simple_returns']+1).cumprod()-1

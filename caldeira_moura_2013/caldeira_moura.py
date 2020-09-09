@@ -85,7 +85,6 @@ def get_position_numbers(signal_list):
                 posnum+=0
             posnums.append(posnum)
     return posnums
-
 def limit_position_time(signals, length):
     nums = [x for x in signals['position_numbers'].unique() if x !=0]
     for j in nums:
@@ -95,7 +94,6 @@ def limit_position_time(signals, length):
             numbers = [j]*length + [0]*(otr_length - length)
             signals['position_numbers'].loc[otr_int[0]:otr_int[-1]] = numbers
     return signals
-
 def get_log_returns(dataset, ticker1, ticker2, hedge_ratio):
     log_L = pd.Series(np.log(dataset[ticker1]))
     log_S = pd.Series(np.log(dataset[ticker2]))
@@ -108,7 +106,6 @@ def get_log_returns(dataset, ticker1, ticker2, hedge_ratio):
                                                0))
     dataset['simple_returns'] = np.exp(dataset['log_returns'])-1
     return dataset
-
 def get_cross_section(signals, cost):
     trades = {}
     nums = [x for x in signals['position_numbers'].unique() if x !=0]
@@ -133,76 +130,6 @@ def trading_rule(current_position, current_zscore):
     if current_position == -1: # the same here
         position = check_close_short(current_zscore, 0.75)
     return position
-
-# tickers = ['ITUB4.SA', 'Ccro3.SA']
-# tickers = ['Brap4.SA', 'Csna3.SA']
-# dataset = dr.get_prices(tickers, 'yahoo', '2004-12-31', '2013-12-31', 'Adj Close').dropna()
-# data_year = dataset.loc['2005':'2006-11-01']
-# # data_year.plot()
-# x_train = sm.add_constant(data_year[tickers[1]])
-# model = sm.OLS(data_year[tickers[0]], x_train)
-# result = model.fit()
-# hedge_ratio = result.params[1]
-# hedge_ratio
-# spread = data_year[tickers[0]] - data_year[tickers[1]] * hedge_ratio
-# spread_zscore = zscore_std(spread)
-# # spread_zscore.hist()
-# # pd.DataFrame({'ITUB4.SA': data_year[tickers[0]],
-# #               'Ccro3.SA * hedge': data_year[tickers[1]] * hedge_ratio}).plot()
-#
-# # 0 - no position, 1 - long, -1 - short
-# positions = [0]
-# number_pos = [0]
-# # n_pos = 0
-# for i in range(1, len(spread_zscore)):
-#     current_position = positions[-1]  # today I look at active position that was set yestraday for today
-#     positions.append(trading_rule(current_position, spread_zscore[i]))
-#
-# signals = pd.DataFrame({'L':data_year[tickers[0]],
-#                         'S':data_year[tickers[1]]* hedge_ratio,
-#                         'Spread_zscore':spread_zscore,
-#                         'positions':positions},
-#                         index=spread.index)
-# signals['positions'] = signals['positions'].shift().fillna(0)
-# signals['position_numbers'] = get_position_numbers(signals['positions'].tolist())
-# signals = limit_position_time(signals, 50)  # simple limiter for positions longer than 50 days
-# # I look at the data at the end of the day!
-# # the trading decision comes in force next day!
-#
-# C = 0.05
-# log_L = pd.Series(np.log(data_year[tickers[0]]))
-# log_S = pd.Series(np.log(data_year[tickers[1]]))
-# signals['Log_L'] = log_L.diff()
-# signals['Log_S'] = log_S.diff()
-# signals['log_returns'] = np.where(signals['positions'] == 1,
-#                                   signals['Log_L'] - signals['Log_S']*hedge_ratio,
-#                                   np.where(signals['positions'] == -1,
-#                                            -1*(signals['Log_L'] - signals['Log_S']*hedge_ratio),
-#                                            0))
-# signals['log_returns_costs'] = np.where(signals['positions'] != 0,
-#                                     signals['log_returns']+2*np.log((1-C)/(1+C)),0)
-# signals['simple_returns'] = np.exp(signals['log_returns'])-1
-# trades = get_cross_section(signals, 0.005)
-
-# fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
-# fig.suptitle('Positions and signals')
-# axs[0].plot(signals['L'], color='orange', label='L', fillstyle='none')
-# axs[0].plot(signals['S'], color='blue', label='S+hedge', fillstyle='none')
-# axs[0].fill_between(signals.index,
-#                     signals[['L','S']].min().min(),
-#                     signals[['L','S']].max().max(), where=signals['positions']==1,
-#                     facecolor='green', alpha=0.5,)
-# axs[0].fill_between(signals.index,
-#                     signals[['L','S']].min().min(),
-#                     signals[['L','S']].max().max(), where=signals['positions']==-1,
-#                     facecolor='red', alpha=0.5,)
-# axs[0].legend()
-# axs[1].plot(signals['Spread_zscore'].index, signals['Spread_zscore'].values)
-# axs[1].axhline(-2, color='green', lw=2, alpha=0.5)
-# axs[1].axhline(-0.5, color='green', lw=2, alpha=0.5)
-# axs[1].axhline(2, color='red', lw=2, alpha=0.5)
-# axs[1].axhline(0.75, color='red', lw=2, alpha=0.5)
-# plt.show()
 
 class backtest_pair:
     def __init__(self, ticker1, ticker2, start_time, end_time, long_open, short_open, long_close, short_close, costs):
@@ -307,8 +234,8 @@ class backtest_pair:
             print('tradng set: {}:{}, EG:{}, ADF:{}, Johansen:{}'.format(test_set.index[0].strftime('%Y-%m-%d'),
                                                                          test_set.index[-1].strftime('%Y-%m-%d'),
                                                                          round(EG, 3), round(ADF, 3), Johansen))
-            # if (EG <= 0.105) and (ADF <= 0.105) and (Johansen == 'coint exists'):
-            if (ADF <= 0.105):
+            if (EG <= 0.105) and (ADF <= 0.105) and (Johansen == 'coint exists'):
+            # if (ADF <= 0.105):
                 # print('tradng set', test_set.index[0], test_set.index[-1])
                 self.get_returns(hedge_ratio=hedge_ratio, dataset=test_set, trading=True)
                 # self.spread_zscore = pd.concat([self.spread_zscore, test_set])
@@ -372,13 +299,11 @@ class backtest_pair:
         self.get_trades_pl()
 
 # bt1 = backtest_pair('Bbas3.SA', 'Usim3.SA','2016-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
-bt1 = backtest_pair('V', 'MA', '2014-12-31', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
+bt1 = backtest_pair('V', 'MA', '2014-01-01', '2020-09-01', -2, 2, -0.5, 0.75, 0.005)
 bt1.run()
-rets = np.exp(bt1.dataset[bt1.dataset['log_returns']!=0]['log_returns'].cumsum())-1
-(bt1.dataset[bt1.dataset['log_returns']!=0]['simple_returns']+1).cumprod()-1
-std = bt1.dataset[bt1.dataset['log_returns']!=0]['log_returns'].std()*np.sqrt(252)
-mean = (1+rets[-1])**(1/(len(bt1.dataset)/252))-1
-mean/std
+# rets = np.exp(bt1.dataset[bt1.dataset['log_returns'] != 0]['log_returns'].cumsum())-1
+# (bt1.dataset[bt1.dataset['log_returns'] != 0]['simple_returns']+1).cumprod()-1
+# std = bt1.dataset[bt1.dataset['log_returns'] != 0]['log_returns'].std()*np.sqrt(252)
 bt1.visualize()
 bt1.visualize_trades_pl()
 bt1.visualize_trades_pl_no_costs()

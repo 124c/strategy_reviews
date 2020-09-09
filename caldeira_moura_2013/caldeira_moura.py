@@ -234,8 +234,8 @@ class backtest_pair:
             print('tradng set: {}:{}, EG:{}, ADF:{}, Johansen:{}'.format(test_set.index[0].strftime('%Y-%m-%d'),
                                                                          test_set.index[-1].strftime('%Y-%m-%d'),
                                                                          round(EG, 3), round(ADF, 3), Johansen))
-            if (EG <= 0.105) and (ADF <= 0.105) and (Johansen == 'coint exists'):
-            # if (ADF <= 0.105):
+            # if (EG <= 0.105) and (ADF <= 0.105) and (Johansen == 'coint exists'):
+            if (ADF <= 0.105):
                 # print('tradng set', test_set.index[0], test_set.index[-1])
                 self.get_returns(hedge_ratio=hedge_ratio, dataset=test_set, trading=True)
                 # self.spread_zscore = pd.concat([self.spread_zscore, test_set])

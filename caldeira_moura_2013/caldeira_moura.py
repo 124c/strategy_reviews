@@ -125,7 +125,6 @@ def check_close_long(current_zscore, close_thresh):
     return np.where(current_zscore > close_thresh, 0, 1)
 def check_close_short(current_zscore, close_thresh):
     return np.where(current_zscore < close_thresh, 0, -1)
-
 def trading_rule(current_position, current_zscore):
     if current_position == 0: # if no positions today, check if I should open one tomorrow
         position = check_open(current_zscore, -2, 2)
@@ -135,7 +134,6 @@ def trading_rule(current_position, current_zscore):
         position = check_close_short(current_zscore, 0.75)
     return position
 
-#
 # tickers = ['ITUB4.SA', 'Ccro3.SA']
 # tickers = ['Brap4.SA', 'Csna3.SA']
 # dataset = dr.get_prices(tickers, 'yahoo', '2004-12-31', '2013-12-31', 'Adj Close').dropna()
@@ -233,8 +231,7 @@ class backtest_pair:
     def get_dataset(self):
         self.dataset = dr.get_prices([self.ticker1, self.ticker2], 'yahoo',
                                      self.start_time, self.end_time, 'Adj Close').dropna()
-        for i in ['Spread_zscore', 'positions','position_numbers', 'Log_L', 'Log_S',
-                  'log_returns', 'simple_returns']:
+        for i in ['Spread_zscore', 'positions', 'position_numbers', 'Log_L', 'Log_S', 'log_returns', 'simple_returns']:
             self.dataset[i] = np.nan
 
     def cut_4months(self):
@@ -277,10 +274,10 @@ class backtest_pair:
         if trading == False:
             positions = [0]*len(spread_zscore)
 
-        signals = pd.DataFrame({str(self.ticker1):dataset[self.ticker1],
-                                str(self.ticker2):dataset[self.ticker2],
+        signals = pd.DataFrame({str(self.ticker1): dataset[self.ticker1],
+                                str(self.ticker2): dataset[self.ticker2],
                                 'Spread_zscore': spread_zscore,
-                                'positions':positions},
+                                'positions': positions},
                                index=spread.index)
         signals['positions'] = signals['positions'].shift().fillna(0)
         signals['position_numbers'] = get_position_numbers(signals['positions'].tolist())
@@ -288,8 +285,8 @@ class backtest_pair:
         # I look at the data at the end of the day!
         # the trading decision comes in force next day!
         # trades = get_cross_section(signals)
-        signals = get_log_returns(dataset=signals, ticker1=self.ticker1,
-                                  ticker2=self.ticker2, hedge_ratio=hedge_ratio)
+        signals = get_log_returns(dataset=signals, ticker1=self.ticker1, ticker2=self.ticker2,
+                                  hedge_ratio=hedge_ratio)
 
         # self.dataset = pd.concat([self.dataset, signals.iloc[:,2:]], axis=1)
         self.dataset.loc[signals.index] = signals
@@ -340,24 +337,24 @@ class backtest_pair:
         axs[0].fill_between(self.dataset.index,
                             self.dataset[[self.ticker1, self.ticker2]].min().min(),
                             self.dataset[[self.ticker1, self.ticker2]].max().max(),
-                            where=self.dataset['positions']==1,
+                            where=self.dataset['positions'] == 1,
                             facecolor='green', alpha=0.5,)
         axs[0].fill_between(self.dataset.index,
                             self.dataset[[self.ticker1, self.ticker2]].min().min(),
                             self.dataset[[self.ticker1, self.ticker2]].max().max(),
-                            where=self.dataset['positions']==-1,
+                            where=self.dataset['positions'] == -1,
                             facecolor='red', alpha=0.5,)
         axs[0].legend()
         axs[1].plot(self.dataset.index, self.dataset['Spread_zscore'].values)
         axs[1].fill_between(self.dataset.index,
                             self.dataset['Spread_zscore'].min(),
                             self.dataset['Spread_zscore'].max(),
-                            where=self.dataset['positions']==-1,
+                            where=self.dataset['positions'] == -1,
                             facecolor='red', alpha=0.5,)
         axs[1].fill_between(self.dataset.index,
                             self.dataset['Spread_zscore'].min(),
                             self.dataset['Spread_zscore'].max(),
-                            where=self.dataset['positions']==1,
+                            where=self.dataset['positions'] == 1,
                             facecolor='green', alpha=0.5,)
         axs[1].axhline(self.long_open, color='green', lw=2, alpha=0.5)
         # axs[1].axhline(self.long_close, color='green', lw=2, alpha=0.5)
